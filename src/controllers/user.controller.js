@@ -14,6 +14,22 @@ class UserDTOCLass {
       throw new CustomError(errorDictionary.UNHANDLED_ERROR, `Error de ejecución DTO; [${error}]`);
     }
   };
+  parseStringToNumbers = async (stringyNumbs) => {
+    try {
+      let numbyStrings = {};
+      for (let i = 0; i < Object.values(stringyNumbs).length; i++) {
+        let myString = Object.values(stringyNumbs)[i];
+        let stringKey = Object.keys(stringyNumbs)[i];
+        if (myString == +myString) {
+          myString = +myString;
+        };
+        numbyStrings[stringKey] = myString;
+      };
+      return numbyStrings;
+    } catch (error) {
+      throw new CustomError(error.type, `Error de ejecución DTO; [${error.message}]`);
+    }
+  };
 };
 
 const DTO = new UserDTOCLass();
@@ -22,6 +38,16 @@ const DTO = new UserDTOCLass();
 class UserManagerClass {
   constructor(service) {
     this.service = service;
+  };
+  getAllUsers = async () => {
+    try {
+      await this.readFileAndSave();
+      const users = this.userArray();
+      if (!users) throw new CustomError(errorDictionary.GENERAL_FOUND_ERROR, `Users`);
+      return users;
+    } catch (error) {
+      throw new CustomError(error.type, `[Service::MDB]: ${error}`);
+    };
   };
   isRegistered = async (focusRoute, returnObject, req, res) => {
     try {
@@ -76,9 +102,10 @@ class UserManagerClass {
       throw new CustomError(error.type, `[deletetUser]: ${error.message}`);
     }
   };
-  paginateUsers = async (...filters) => {
+  paginateUsers = async (limit, page, role, where) => {
     try {
-      return await this.service.paginateUsers(...filters);
+      const parsed = await DTO.parseStringToNumbers({limit, page, role, where});     
+      return await this.service.paginateUsers(parsed != {} ? parsed.limit : limit, parsed != {} ? parsed.page : page, parsed != {} ? parsed.role : role, where);
     } catch (error) {
       throw new CustomError(error.type, `[paginateUsers]: ${error.message}`);
     }

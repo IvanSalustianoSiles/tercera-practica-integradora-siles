@@ -42,7 +42,7 @@ class ProductDTO {
       };
       return numbyStrings;
     } catch (error) {
-      throw new CustomError(errorDictionary.UNHANDLED_ERROR, `Error de ejecución DTO; [${error}]`);
+      throw new CustomError(error.type, `Error de ejecución DTO; [${error.message}]`);
     }
   };
 };

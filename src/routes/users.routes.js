@@ -18,18 +18,13 @@ const transport = nodemailer.createTransport({
   }
 });
 
-
-
 router.get("/", async (req, res) => {
   try {
-    const users = await UserManager.paginateUsers([
-      { role: "user" },
-      { page: 1, limit: 10 }
-    ]);
+    const users = await UserManager.paginateUsers(req.query.limit, req.query.page, req.query.role, "/api/users"); 
     if (!users) throw new CustomError(errorDictionary.FOUND_USER_ERROR);
     res.send({ status: 1, payload: users });
   } catch (error){
-    throw new CustomError(errorDictionary.UNHANDLED_ERROR, `${error}`);
+    return error;
   }
 });
 router.post("/", handlePolicies(["ADMIN"]), async (req, res) => {
@@ -147,5 +142,5 @@ router.post("/premium/:uid", verifyMDBID(["uid"]), handlePolicies(["ADMIN"]), as
   } catch (error) {
     res.send({ origin: config.SERVER, error: error });
   }
-})
+});
 export default router;

@@ -10,6 +10,16 @@ class UserFSClass {
     this.userArray = [];
     this.path = `${config.DIRNAME}/jsons/user.json`;
   }
+  getAllUsers = async () => {
+    try {
+      await this.readFileAndSave();
+      const users = this.userArray();
+      if (!users) throw new CustomError(errorDictionary.GENERAL_FOUND_ERROR, `Users`);
+      return users;
+    } catch (error) {
+      return undefined;
+    };
+  };
   isRegistered = async (focusRoute, returnObject, req, res) => {
     try {
       return req.session.user
@@ -109,17 +119,23 @@ class UserFSClass {
       return undefined;
     }
   };
-  paginateUsers = async (filters = [{}, { page: 1, limit: 10 }]) => {
+  paginateUsers = async (limit = 10, page = 1, role, where) => {
     try {
-      await this.readFileAndSave();
+      
+      const lecture = await this.readFileAndSave();
+
       let matrixUsers = [];
       let j = 0;
       matrixUsers.push([]);
-      filters[0].role ? this.userArray = this.userArray.filter(user => user.role == filters[0].role)
-      : this.userArray;
 
-      for (let i = 0; i < this.productsArray.length; i++) {
-        if (i == 0 || !(i % filters[1].limit == 0)) {
+      role
+        ? (this.userArray = this.userArray.filter(
+            (user) => user.role == role
+          ))
+        : this.userArray;
+
+      for (let i = 0; i < this.userArray.length; i++) {
+        if (i == 0 || !(i % limit == 0)) {
           matrixUsers[j].push(this.userArray[i]);
         } else {
           matrixUsers.push([]);
@@ -127,34 +143,44 @@ class UserFSClass {
           matrixUsers[j].push(this.userArray[i]);
         }
       }
-  
-      const pageUsers = matrixProducts[filters[1].page - 1];
-      let prevPage = filters[1].page == 1 ? undefined : filters[1].page - 1;
-      let nextPage = !matrixProducts[filters[1].page] ? undefined : filters[1].page + 1;
+      let pageUsers = matrixUsers[page - 1];
+      let totalPages = matrixUsers.length;
+      let prevPage = page == 1 ? undefined : page - 1;
+      let nextPage = !matrixUsers[page] ? undefined : page + 1;
       let prevUrl;
       let nextUrl;
 
-      if (filters[0].role) {
+      if (role) {
         prevPage
-          ? (prevUrl = `/api/users?role=${filters[0].role}&page=${prevPage}&limit=${filters[1].limit}`)
+          ? (prevUrl = `${where}?role=${role}&page=${prevPage}&limit=${limit}`)
           : null;
         nextPage
-          ? (nextUrl = `/api/users?role=${filters[0].role}&page=${nextPage}&limit=${filters[1].limit}`)
+          ? (nextUrl = `${where}?role=${role}&page=${nextPage}&limit=${limit}`)
           : null;
       } else {
         prevPage
-          ? (prevUrl = `/api/users?page=${prevPage}&limit=${filters[1].limit}`)
+          ? (prevUrl = `${where}?page=${prevPage}&limit=${limit}`)
           : null;
         nextPage
-          ? (nextUrl = `/api/users?page=${nextPage}&limit=${filters[1].limit}`)
+          ? (nextUrl = `${where}?page=${nextPage}&limit=${limit}`)
           : null;
       }
-      return {
+      this.getting = false;
+
+      const paginateUsersFormat = pageUsers.map( user => {
+        user = { _doc: user, _id: user._id }
+        return user;
+      });
+
+      const toSendObject = {
         status: "success",
-        payload: pageUsers,
+        payload: { docs: paginateUsersFormat, prevPage: prevPage, page: page, totalPages: totalPages, nextPage: nextPage },
         prevLink: prevUrl,
         nextLink: nextUrl,
       };
+    
+      return toSendObject;
+
     } catch (error) {
       return undefined;
     }

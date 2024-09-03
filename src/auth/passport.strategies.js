@@ -50,6 +50,7 @@ const initAuthStrategies = () => {
         try {
 
           let user = await UserManager.findUserByEmail(username);
+          console.log(user);
           
           if (user) return done(new CustomError(errorDictionary.AUTHENTICATE_USER_ERROR, "Datos ya ocupados"), false);
           

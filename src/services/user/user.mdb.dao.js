@@ -8,6 +8,15 @@ class UserMDBClass {
   constructor(model) {
     this.model = model;
   };
+  getAllUsers = async () => {
+    try {
+      const users = await this.model.find().lean();
+      if (!users) throw new CustomError(errorDictionary.GENERAL_FOUND_ERROR, `Users`);
+      return users;
+    } catch (error) {
+      return undefined;
+    };
+  }
   isRegistered = async (focusRoute, returnObject, req, res) => {
     try {
       return req.session.user
@@ -65,9 +74,9 @@ class UserMDBClass {
       return undefined;
     }
   };
-  paginateUsers = async (filters) => {
+  paginateUsers = async (limit = 10, page = 1, role = "user", where) => {
     try {
-      const dbUsers = await this.model.paginate(...filters);
+      const dbUsers = await this.model.paginate({ role: role }, { page: page, limit: limit });
       if (!dbUsers) throw new CustomError(errorDictionary.FOUND_USER_ERROR, `Usuarios paginados`);
       return dbUsers;
     } catch (error) {
