@@ -19,10 +19,20 @@ class UserFSClass {
       return undefined;
     }
   };
-  findUser = async (emailValue) => {
+  findUserByEmail = async (emailValue) => {
     try {
       await this.readFileAndSave();
       const myUser = await this.userArray.find(user => user.email == emailValue);
+      if (!myUser) throw new CustomError(errorDictionary.FOUND_USER_ERROR);  
+      return myUser;
+    } catch (error) {
+      return undefined;
+    }
+  };
+  findUserById = async (uid) => {
+    try {
+      await this.readFileAndSave();
+      const myUser = await this.userArray.find(user => user._id == uid);
       if (!myUser) throw new CustomError(errorDictionary.FOUND_USER_ERROR);  
       return myUser;
     } catch (error) {
@@ -59,6 +69,7 @@ class UserFSClass {
         if (!filteredUser) throw new CustomError(errorDictionary.FOUND_USER_ERROR, `Usuario a actualizar`);
         let updatedUser = filteredUser;
         await this.readFileAndSave();
+        const userIndex = this.userArray.indexOf(filteredUser);
         for (let i = 0; i < Object.values(update).length; i++) {
           let updateValue = Object.values(update)[i];
           let updateProp = Object.keys(update)[i];
@@ -67,8 +78,8 @@ class UserFSClass {
 
         if (!updatedUser) throw new CustomError(errorDictionary.FOUND_USER_ERROR, `Usuario actualizado`);
   
+        this.userArray.splice(userIndex, 1, updatedUser);
         await this.updateFile(this.userArray);
-        this.userArray.push(updatedUser);
         if (options.new == true) {
           return updatedUser;
         } else {
@@ -174,7 +185,7 @@ class UserFSClass {
 // Métodos a utilizar:
 // isRegistered (focusRoute, returnObject, req, res)
 // isRegisteredwToken (focusRoute, returnObject, req, res)
-// findUser (emailValue)
+// findUserByEmail (emailValue)
 // addUser (user)
 // updateUser (filter, update, options)
 // deleteUser (filter)

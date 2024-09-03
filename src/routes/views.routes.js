@@ -148,7 +148,7 @@ router.get("/register", (req, res) => {
 });
 router.get("/profile", async (req, res) => {
   try {
-    await UserManager.isRegistered("profile", { user: req.session.user }, req, res);
+    await UserManager.isRegistered("profile", { user: req.session.user, showWarning: req.query.warning ? true : false, warning: req.query.warning }, req, res);
   } catch (error) {
     req.logger.error(`${new Date().toDateString()}; ${error}; ${req.url}`);
     res.send({ origin: config.SERVER, error: `[ERROR]: ${error}`});
@@ -192,5 +192,13 @@ router.get("/restorecallback/:code", verifyRestoreCode(), async (req, res) => {
     res.send({ origin: config.SERVER, error: `[ERROR]: ${error}`});
   }
 });
-
+router.get("/roleChange/:uid", verifyMDBID(["uid"]), handlePolicies(["ADMIN"]), async (req, res) => {
+  try {
+    const { uid } = req.params;
+    await UserManager.isRegistered("roleChange", { postAction: `/api/users/premium/${uid}` }, req, res);
+  } catch (error) {
+    req.logger.error(`${new Date().toDateString()}; ${error}; ${req.url}`);
+    res.send({ origin: config.SERVER, error: `[ERROR]: ${error}`});
+}
+});
 export default router;

@@ -26,7 +26,7 @@ const initAuthStrategies = () => {
       async (req, username, password, done) => {   
         try {
 
-          let myUser = await UserManager.findUser(username);
+          let myUser = await UserManager.findUserByEmail(username);
 
           const validation = isValidPassword(myUser, password);
           
@@ -49,7 +49,7 @@ const initAuthStrategies = () => {
       
         try {
 
-          let user = await UserManager.findUser(username);
+          let user = await UserManager.findUserByEmail(username);
           
           if (user) return done(new CustomError(errorDictionary.AUTHENTICATE_USER_ERROR, "Datos ya ocupados"), false);
           
@@ -90,7 +90,7 @@ const initAuthStrategies = () => {
             email = emails.filter(email => email.verified).map(email => ({ value: email.email}))
           }
           if (email) {
-            const foundUser = await UserManager.findUser(email || emailList[0]);
+            const foundUser = await UserManager.findUserByEmail(email || emailList[0]);
             if (!foundUser) {
               const cart = await CartManager.createCartMDB();
               let completeName = profile._json.name.split(" ");

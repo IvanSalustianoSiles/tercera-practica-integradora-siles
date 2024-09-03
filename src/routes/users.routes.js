@@ -72,7 +72,7 @@ router.post("/restore", async (req, res) => {
   try {
     const { email } = req.body;
 
-    const emailValidation = await UserManager.findUser(email);
+    const emailValidation = await UserManager.findUserByEmail(email);
 
     if (!emailValidation) res.redirect(`/restore?error=${encodeURI("Correo inválido.")}`);
     
@@ -100,7 +100,7 @@ router.post("/restore", async (req, res) => {
     });
   } catch (error) {
     req.logger.error(`${new Date().toDateString()}; ${error}; ${req.url}`);
-    res.send({ origin: config.SERVER, error: `${error}`});
+    res.send({ origin: config.SERVER, error: error});
 }
 });
 router.post("/restorecallback", async (req, res) => {
@@ -122,42 +122,30 @@ router.post("/restorecallback", async (req, res) => {
     
   } catch (error) {
     req.logger.error(`${new Date().toDateString()}; ${error}; ${req.url}`);
-    res.send({ origin: config.SERVER, error: `${error}`});
+    res.send({ origin: config.SERVER, error: error});
   }
 });
-router.get("/rolChange", handlePolicies(["USER", "PREMIUM"]), async (req, res) => {
+router.post("/premium/:uid", verifyMDBID(["uid"]), handlePolicies(["ADMIN"]), async (req, res) => {
   try {
-    let role = req.user.role.toUpperCase();    
-    console.log(`Entra acá como ${role}`);
-    
-    const myUser = await UserManager.findUser(req.user.email);
+    const { uid } = req.params;
+
+    const myUser = await UserManager.findUserById(uid);
+        
     if (!myUser) throw new CustomError(errorDictionary.FOUND_USER_ERROR);
-    if (role == "USER") {   
+
+    let role = myUser.role.toUpperCase();
+
+    if (role == "USER") {
       const updateOne = await UserManager.updateUser({_id: myUser._id}, {role: "premium"});
-      console.log("Entra acá y cambia a premium");
-      
       if (!updateOne) throw new CustomError(errorDictionary.FOUND_USER_ERROR);
-      console.log(updateOne);
-      
-      req.user.role = "premium";
-      req.session.user.role = "premium";
-      req.session.save(error => {
-        if (error) throw new CustomError(errorDictionary.SESSION_ERROR);
-        res.send({ origin: config.SERVER, payload: "Su rol ahora es 'premium'"});
-      })
+      res.send({ origin: config.SERVER, payload: `Rol de usuario ${myUser.first_name} ${myUser.last_name} actualizado a ${updateOne.role}.`})
     } else {
       const updateTwo = await UserManager.updateUser({_id: myUser._id}, {role: "user"});
-      console.log(updateTwo);      
       if (!updateTwo) throw new CustomError(errorDictionary.FOUND_USER_ERROR);
-      req.user.role = "user";
-      req.session.user.role = "user";
-      req.session.save(error => {
-        if (error) throw new CustomError(errorDictionary.SESSION_ERROR);
-        res.send({ origin: config.SERVER, payload: "Su rol ahora es 'user'"});
-      })
+      res.send({ origin: config.SERVER, payload: `Rol de usuario ${myUser.first_name} ${myUser.last_name} actualizado a ${updateTwo.role}.`})
     }
   } catch (error) {
-    res.send({ origin: config.SERVER, error: `[${error.type}]: ${error.message}`});
+    res.send({ origin: config.SERVER, error: error });
   }
 })
 export default router;

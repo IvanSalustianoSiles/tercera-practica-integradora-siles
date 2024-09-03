@@ -17,11 +17,20 @@ class UserMDBClass {
       return undefined;
     }
   };
-  findUser = async (emailValue) => {
+  findUserByEmail = async (emailValue) => {
     try {
       let myUser = await usersModel.find({ email: emailValue }).lean();
       if (!myUser) throw new CustomError(errorDictionary.FOUND_USER_ERROR);
       return myUser[0];
+    } catch (error) {
+      return undefined;
+    }
+  };
+  findUserById = async (uid) => {
+    try {
+      const myUser = await this.model.findById(uid);
+      if (!myUser) throw new CustomError(errorDictionary.FOUND_USER_ERROR);  
+      return myUser;
     } catch (error) {
       return undefined;
     }
@@ -70,7 +79,7 @@ class UserMDBClass {
 // Métodos a utilizar:
 // isRegistered (focusRoute, returnObject, req, res)
 // isRegisteredwToken (focusRoute, returnObject, req, res)
-// findUser (emailValue)
+// findUserByEmail (emailValue)
 // addUser (user)
 // updateUser (filter, update, options)
 // deleteUser (filter)
